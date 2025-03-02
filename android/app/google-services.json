@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "741520299639",
+    "project_id": "personal-expense-c12f2",
+    "storage_bucket": "personal-expense-c12f2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:741520299639:android:6f48e7f1897f33ebc49872",
+        "android_client_info": {
+          "package_name": "com.example.personal_expense"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDPFXW_HNc-izdDVG_cN3n_WcvYtt0lPjE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
