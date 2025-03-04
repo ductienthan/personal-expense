@@ -6,6 +6,7 @@ import 'models/expense.dart';
 import 'constants/expense_category.dart';
 import 'services/firebase_service.dart';
 import 'report_page.dart';
+import 'services/auth_service.dart';
 
 class HomePage extends StatefulWidget {
   final bool isAuthenticated;
@@ -23,6 +24,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final FirebaseService _firebaseService = FirebaseService();
+  final AuthService _authService = AuthService();
   late Stream<List<Expense>> _expensesStream;
   DateTimeRange? _selectedDateRange;
   int _currentPage = 0;
@@ -163,6 +165,22 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error in edit flow: $e')),
+      );
+    }
+  }
+
+  Future<void> _signOut() async {
+    try {
+      await _authService.signOut();
+      if (!mounted) return;
+      
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const SignInPage()),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error signing out: $e')),
       );
     }
   }

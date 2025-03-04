@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'homepage.dart';
 import 'email_verification_page.dart';
 import 'services/firebase_service.dart';
+import 'services/auth_service.dart';
 // import 'package:flutter/foundation.dart';
 
 class SignInPage extends StatefulWidget {
@@ -19,6 +20,31 @@ class _SignInPageState extends State<SignInPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   bool _isLoading = false; // To show a loading indicator during sign-in
   final FirebaseService _firebaseService = FirebaseService();
+  final AuthService _authService = AuthService();
+
+  @override
+  void initState() {
+    super.initState();
+    // Use Future.delayed to check user after build is complete
+    Future.delayed(Duration.zero, () {
+      _checkCurrentUser();
+    });
+  }
+
+  void _checkCurrentUser() {
+    final currentUser = _authService.getCurrentUser();
+    if (currentUser != null && mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => HomePage(
+            isAuthenticated: true,
+            userId: currentUser.uid,
+          ),
+        ),
+      );
+    }
+  }
 
   Future<void> _signIn() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
@@ -49,14 +75,6 @@ class _SignInPageState extends State<SignInPage> {
               userId: userCredential.user!.uid,
             ),
           ),
-        );
-      } else {
-        // This shouldn't happen due to the check in FirebaseService,
-        // but adding as a safeguard
-        await FirebaseAuth.instance.signOut();
-        throw FirebaseAuthException(
-          code: 'email-not-verified',
-          message: 'Please verify your email before signing in.',
         );
       }
     } on FirebaseAuthException catch (e) {
