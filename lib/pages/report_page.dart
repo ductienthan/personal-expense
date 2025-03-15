@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'dart:math' show pi;
 import '../services/firebase_service.dart';
 import '../models/expense.dart';
 import '../constants/expense_category.dart';
@@ -27,6 +29,7 @@ class _ReportPageState extends State<ReportPage> {
   Map<ExpenseCategory, double> _categoryTotals = {};
   double _totalExpenses = 0;
   bool _isLoading = true;
+  int _selectedIndex = 2;
 
   @override
   void initState() {
@@ -175,10 +178,6 @@ class _ReportPageState extends State<ReportPage> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF0C161D)),
-          onPressed: () => Navigator.pop(context),
-        ),
       ),
       body: Column(
         children: [
@@ -299,6 +298,107 @@ class _ReportPageState extends State<ReportPage> {
                       ),
           ),
         ],
+      ),
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 8,
+              offset: Offset(0, -2),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+          child: BottomNavigationBar(
+            currentIndex: _selectedIndex,
+            onTap: (index) async {
+              if (index == _selectedIndex) return;
+              
+              switch (index) {
+                case 0: // Home
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => HomePage(
+                        isAuthenticated: true,
+                        userId: widget.userId,
+                      ),
+                    ),
+                  );
+                  break;
+                case 1: // Add
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AddExpensePage(
+                        userId: widget.userId,
+                      ),
+                    ),
+                  );
+                  if (result != null) {
+                    _loadExpenses();
+                  }
+                  break;
+                case 2: // Already on Reports
+                  break;
+              }
+            },
+            backgroundColor: Colors.white,
+            selectedItemColor: const Color(0xFF0095FF),
+            unselectedItemColor: const Color(0xFF457AA1),
+            showSelectedLabels: false,
+            showUnselectedLabels: false,
+            elevation: 0,
+            items: [
+              const BottomNavigationBarItem(
+                icon: Icon(CupertinoIcons.house),
+                activeIcon: Icon(CupertinoIcons.house_fill),
+                label: 'Home',
+              ),
+              BottomNavigationBarItem(
+                icon: Container(
+                  width: 60,
+                  height: 60,
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Theme.of(context).colorScheme.primary,
+                        Theme.of(context).colorScheme.secondary,
+                        Theme.of(context).colorScheme.tertiary,
+                      ],
+                      transform: const GradientRotation(pi / 4),
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    CupertinoIcons.plus,
+                    color: Colors.white,
+                  ),
+                ),
+                activeIcon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0095FF),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    CupertinoIcons.plus,
+                    color: Colors.white,
+                  ),
+                ),
+                label: 'Add',
+              ),
+              const BottomNavigationBarItem(
+                icon: Icon(CupertinoIcons.graph_square),
+                activeIcon: Icon(CupertinoIcons.graph_square_fill),
+                label: 'Reports',
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
