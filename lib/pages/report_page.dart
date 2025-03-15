@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'services/firebase_service.dart';
-import 'models/expense.dart';
-import 'constants/expense_category.dart';
+import '../services/firebase_service.dart';
+import '../models/expense.dart';
+import '../constants/expense_category.dart';
+import '../pages/home_page.dart';
+import '../pages/signin_page.dart';
+import '../pages/signup_page.dart';
+import '../pages/add_expense_page.dart';
 
 class ReportPage extends StatefulWidget {
   final String userId;

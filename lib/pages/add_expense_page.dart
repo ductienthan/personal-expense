@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'models/expense.dart';
-import 'constants/expense_category.dart';
-import 'services/firebase_service.dart';
-import 'widgets/add_category_dialog.dart';
-import 'widgets/limit_reached_dialog.dart';
+import '../models/expense.dart';
+import '../constants/expense_category.dart';
+import '../services/firebase_service.dart';
+import '../widgets/add_category_dialog.dart';
+import '../widgets/limit_reached_dialog.dart';
 
 class AddExpensePage extends StatefulWidget {
   final String userId;

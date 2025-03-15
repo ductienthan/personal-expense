@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'signin_page.dart';
 import 'signup_page.dart';  // Add this import
-import 'addExpensePage.dart';
-import 'models/expense.dart';
-import 'constants/expense_category.dart';
-import 'services/firebase_service.dart';
-import 'report_page.dart';
-import 'services/auth_service.dart';
+import 'add_expense_page.dart';
+import '../models/expense.dart';
+import '../constants/expense_category.dart';
+import '../services/firebase_service.dart';
+import '../pages/report_page.dart';
+import '../services/auth_service.dart';
 import 'package:intl/intl.dart';
 import 'dart:math';
-import 'widgets/expense_item.dart';
+import '../widgets/expense_item.dart';
 
 class HomePage extends StatefulWidget {
   final bool isAuthenticated;
