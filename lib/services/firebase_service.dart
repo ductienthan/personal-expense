@@ -382,4 +382,17 @@ class FirebaseService {
       rethrow;
     }
   }
+
+  Future<Map<String, dynamic>?> getUserDocument(String userId) async {
+    try {
+      final docSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .get();
+      return docSnapshot.data();
+    } catch (e) {
+      debugPrint('Error getting user document: $e');
+      return null;
+    }
+  }
 }

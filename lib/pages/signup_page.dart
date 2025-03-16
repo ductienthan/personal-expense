@@ -1,52 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'homepage.dart';
-import 'email_verification_page.dart';
-import 'services/firebase_service.dart';
-import 'services/auth_service.dart';
-// import 'package:flutter/foundation.dart';
+// import 'package:cloud_firestore/cloud_firestore.dart';
+import '../pages/home_page.dart';
+import '../services/firebase_service.dart';
+import '../pages/email_verification_page.dart';
 
-class SignInPage extends StatefulWidget {
-  const SignInPage({super.key});
+class SignUpPage extends StatefulWidget {
+  const SignUpPage({super.key});
 
   @override
-  State<SignInPage> createState() => _SignInPageState();
+  State<SignUpPage> createState() => _SignUpPageState();
 }
 
-class _SignInPageState extends State<SignInPage> {
+class _SignUpPageState extends State<SignUpPage> {
   bool _isPasswordVisible = false;
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  bool _isLoading = false; // To show a loading indicator during sign-in
   final FirebaseService _firebaseService = FirebaseService();
-  final AuthService _authService = AuthService();
+  // final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  bool _isLoading = false;
 
   @override
-  void initState() {
-    super.initState();
-    // Use Future.delayed to check user after build is complete
-    Future.delayed(Duration.zero, () {
-      _checkCurrentUser();
-    });
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
   }
 
-  void _checkCurrentUser() {
-    final currentUser = _authService.getCurrentUser();
-    if (currentUser != null && mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => HomePage(
-            isAuthenticated: true,
-            userId: currentUser.uid,
-          ),
-        ),
-      );
-    }
-  }
-
-  Future<void> _signIn() async {
+  Future<void> _signUp() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill in all fields')),
@@ -59,28 +43,15 @@ class _SignInPageState extends State<SignInPage> {
     });
 
     try {
-      final userCredential = await _firebaseService.signIn(
+      final userCredential = await _firebaseService.signUp(
         _emailController.text,
         _passwordController.text,
       );
 
-      if (!mounted) return;
+      if (userCredential.user != null) {
+        await userCredential.user!.sendEmailVerification();
 
-      if (userCredential.user != null && userCredential.user!.emailVerified) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => HomePage(
-              isAuthenticated: true,
-              userId: userCredential.user!.uid,
-            ),
-          ),
-        );
-      }
-    } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
-      
-      if (e.code == 'email-not-verified') {
+        if (!mounted) return;
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -89,23 +60,11 @@ class _SignInPageState extends State<SignInPage> {
             ),
           ),
         );
-        return;
       }
-      
-      String message = 'An error occurred during sign in';
-      if (e.code == 'user-not-found') {
-        message = 'No user found with this email';
-      } else if (e.code == 'wrong-password') {
-        message = 'Wrong password provided';
-      }
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error signing in: $e')),
+        SnackBar(content: Text('Error signing up: $e')),
       );
     } finally {
       if (mounted) {
@@ -118,18 +77,20 @@ class _SignInPageState extends State<SignInPage> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const HomePage(isAuthenticated: false),
-          ),
-        );
-        return false;
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) { 
+        if (!didPop) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const HomePage(isAuthenticated: false),
+            ),
+          );
+        }
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC), // slate-50
+        backgroundColor: const Color(0xFFF8FAFC),
         body: SafeArea(
           child: SingleChildScrollView(
             child: Column(
@@ -152,25 +113,11 @@ class _SignInPageState extends State<SignInPage> {
                   ),
                 ),
 
-                // Hero Image
-                Container(
-                  height: 320,
-                  width: double.infinity,
-                  decoration: const BoxDecoration(
-                    image: DecorationImage(
-                      image: NetworkImage(
-                        "https://cdn.usegalileo.ai/sdxl10/3eec91d0-77d7-461d-a9e5-6e8265b2d46d.png",
-                      ),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-
-                // Sign In Title
+                // Sign Up Title
                 const Padding(
                   padding: EdgeInsets.fromLTRB(16, 20, 16, 12),
                   child: Text(
-                    'Sign into your account',
+                    'Create your account',
                     style: TextStyle(
                       color: Color(0xFF0C161D),
                       fontSize: 22,
@@ -220,7 +167,7 @@ class _SignInPageState extends State<SignInPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Enter your password',
+                        'Create password',
                         style: TextStyle(
                           color: Color(0xFF0C161D),
                           fontSize: 16,
@@ -258,11 +205,45 @@ class _SignInPageState extends State<SignInPage> {
                   ),
                 ),
 
-                // Login Button
+                // Confirm Password Input
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Confirm password',
+                        style: TextStyle(
+                          color: Color(0xFF0C161D),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _confirmPasswordController,
+                        obscureText: !_isPasswordVisible,
+                        decoration: InputDecoration(
+                          hintText: 'Confirm password',
+                          hintStyle: const TextStyle(color: Color(0xFF457AA1)),
+                          filled: true,
+                          fillColor: const Color(0xFFE6EEF4),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.all(16),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Sign Up Button
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: ElevatedButton(
-                    onPressed: _isLoading ? null : _signIn,
+                    onPressed: _isLoading ? null : _signUp,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF0095FF),
                       minimumSize: const Size(double.infinity, 48),
@@ -273,96 +254,13 @@ class _SignInPageState extends State<SignInPage> {
                     child: _isLoading
                         ? const CircularProgressIndicator(color: Colors.white)
                         : const Text(
-                            'Log in',
+                            'Create Account',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                  ),
-                ),
-
-                // Forgot Password
-                Center(
-                  child: TextButton(
-                    onPressed: () {},
-                    child: const Text(
-                      'Forgot your password?',
-                      style: TextStyle(
-                        color: Color(0xFF457AA1),
-                        fontSize: 14,
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Or sign in with
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-                  child: Text(
-                    'Or sign in with',
-                    style: TextStyle(
-                      color: Color(0xFF0C161D),
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: -0.015,
-                    ),
-                  ),
-                ),
-
-                // Social Login Buttons
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: SizedBox(
-                          height: 40,
-                          child: ElevatedButton(
-                            onPressed: () {},
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFE6EEF4),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: const Text(
-                              'Continue with Google',
-                              style: TextStyle(
-                                color: Color(0xFF0C161D),
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: SizedBox(
-                          height: 40,
-                          child: ElevatedButton(
-                            onPressed: () {},
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFE6EEF4),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: const Text(
-                              'Continue with Apple',
-                              style: TextStyle(
-                                color: Color(0xFF0C161D),
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
                   ),
                 ),
 
@@ -373,12 +271,5 @@ class _SignInPageState extends State<SignInPage> {
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
   }
 }
